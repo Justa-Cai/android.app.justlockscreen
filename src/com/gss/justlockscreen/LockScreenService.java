@@ -3,6 +3,9 @@ package com.gss.justlockscreen;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
@@ -29,8 +32,7 @@ public class LockScreenService extends Service {
 	private int miTick = 0;
 
 	private boolean mbWifiStatus, mbGprsStatus; // WIFI GPRS 状态
-	private boolean mbWifiStatusChange=false, mbGprsStatusChange=false; // WIFI GPRS 状态
-															// 是否被软件操作过
+	private boolean mbWifiStatusChange=false, mbGprsStatusChange=false; // WIFI GPRS 状态 是否被软件操作过
 
 	private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {// 广播消息的处理
 		@Override
@@ -137,13 +139,42 @@ public class LockScreenService extends Service {
 		intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		intentFilter.addAction(Intent.ACTION_SCREEN_ON);
 		getBaseContext().registerReceiver(mIntentReceiver, intentFilter);
+		
+		mUtils.Init(getApplicationContext());
+		
+		// 状态栏
+		CreateNotication();
 
+		// locale status
 		mbScreenOpen = false;
 		mbScreenLockByWidgets = false;
-
-		mUtils.Init(getApplicationContext());
+		
 		mTimeoutTask = new TimeoutTask();
 		mTimeoutTask.execute();
+	}
+	
+	private void CreateNotication()
+	{
+		NotificationManager notificationManager = mUtils.GetNotificationManager();
+		
+		//定义Notification的各种属性
+		int icon = R.drawable.lock; //通知图标
+		CharSequence tickerText = "JUST LOCK"; //状态栏显示的通知文本提示
+		long when = System.currentTimeMillis(); //通知产生的时间，会在通知信息里显示
+		Notification notification = new Notification(icon,tickerText,when);
+		notification.flags |= Notification.FLAG_ONGOING_EVENT;
+		notification.flags |= Notification.FLAG_NO_CLEAR;
+		
+		Intent intent= new Intent("com.gss.justlockscreen.widget.click");
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0,  
+                intent, 0);  
+        
+        Context context = getApplicationContext(); //上下文
+        CharSequence contentTitle = "Just Lock Screen!"; //通知栏标题
+        CharSequence contentText = "Click me to Close Screen!"; //通知栏内容
+        
+        notification.setLatestEventInfo(context, contentTitle, contentText, pendingIntent);	
+        notificationManager.notify(0,notification);
 	}
 
 	@Override

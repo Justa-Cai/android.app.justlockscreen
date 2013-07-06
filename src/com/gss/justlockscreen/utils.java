@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -34,6 +35,7 @@ public class utils {
 	private WifiManager mWifiManager;
 	private ConnectivityManager mConnectivityManager;
 	private PowerManager mPowerManager;
+	private NotificationManager mNotificationManager;
 	
 	// handle
 	private Context mContext;
@@ -64,6 +66,7 @@ public class utils {
 		mWifiManager = (WifiManager)mContext.getSystemService(Context.WIFI_SERVICE);
 		mConnectivityManager = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 		mPowerManager = (PowerManager)mContext.getSystemService(Context.POWER_SERVICE);
+		mNotificationManager = (NotificationManager)mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 		
 		// 
 		File f = Environment.getExternalStorageDirectory();
@@ -122,6 +125,13 @@ public class utils {
 
 	}
 	
+	///////////////////////////////////////////////////////////////////////////////////////////////
+	// 通知 操作
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	NotificationManager GetNotificationManager()
+	{
+		return mNotificationManager;
+	}
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	// WIFI 操作
 	//////////////////////////////////////////////////////////////////////////////////////////////
