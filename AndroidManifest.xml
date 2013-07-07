@@ -3,12 +3,12 @@
     package="com.gss.justlockscreen"
     android:versionCode="1"
     android:versionName="1.0" >
-    
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <uses-sdk
         android:minSdkVersion="8"
@@ -27,8 +27,8 @@
             </meta-data>
 
             <intent-filter>
-                <action android:name="com.gss.justlockscreen.widget.click"  />
-                <action android:name="com.gss.justlockscreen.widget.timeout"  />
+                <action android:name="com.gss.justlockscreen.widget.click" />
+                <action android:name="com.gss.justlockscreen.widget.timeout" />
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
         </receiver>
@@ -37,9 +37,8 @@
             android:name="com.gss.justlockscreen.MainActivity"
             android:label="@string/title_activity_main" >
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+	            
 
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
@@ -56,7 +55,14 @@
             </intent-filter>
         </receiver>
 
-        <service android:name="LockScreenService"  />
+        <service android:name="LockScreenService" />
+
+        <activity android:name="com.gss.justlockscreen.SettingActivity" >
+		<intent-filter >
+		        <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+		</intent-filter>
+        </activity>
     </application>
 
 </manifest>

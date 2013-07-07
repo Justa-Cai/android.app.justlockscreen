@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="功能设置" >
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="auto_close"
+            android:summary="是否在锁屏后,自动关闭网络"
+            android:title="智能关闭网络" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="auto_open"
+            android:summary="是否在亮屏后,恢复关闭前状态"
+            android:title="智能开启网络" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="auto_close_wifi"
+            android:summary="锁屏后，智能关闭WIFI"
+            android:title="关闭WIFI" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="auto_close_gprs"
+            android:summary="锁屏后，智能关闭GPRS"
+            android:title="关闭GPRS" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="参数设置" >
+        <EditTextPreference
+            android:defaultValue="10"
+            android:key="screen_after_close_timeout"
+            android:summary="锁屏后,多少时间(秒)后关闭网络"
+            android:title="智能关闭网络超时" />
+        <EditTextPreference
+            android:defaultValue="5"
+            android:key="screen_after_open_timeout"
+            android:summary="亮屏后,多少时间(秒)后开启网络"
+            android:title="智能开启网络超时" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="一键锁屏设置" >
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="onekey_statusbar"
+            android:summary="添加一键锁屏至 通知栏"
+            android:title="通知栏" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="onekey_Effects"
+            android:summary="TODO..."
+            android:title="锁屏动画" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory android:title="其它" >
+               <com.gss.justlockscreen.AboutDailogPreference
+                   android:dialogTitle="关于"
+                   android:dialogLayout="@layout/about"
+                   android:dialogMessage="这里是消息"
+                   android:title="关于"
+                   android:negativeButtonText="@null"
+                   android:positiveButtonText="@null"
+                   />
+        </PreferenceCategory>
+
+</PreferenceScreen>

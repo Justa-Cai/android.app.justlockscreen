@@ -21,18 +21,21 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 		mUtils.Init(getApplicationContext());
 		
-		if (!mUtils.IsHaveDevicePolicyPermission())
-			mUtils.TryHaveDevicePolicyPermission(this);
+		//if (!mUtils.IsHaveDevicePolicyPermission())
+		//	mUtils.TryHaveDevicePolicyPermission(this);
 		
 		mTextView = (TextView)findViewById(R.id.textview1);
 		mTextView.append("\n");
-		if (!mUtils.WIfiGetStatus())
-			mUtils.WifiOptService(true);
+	//	if (!mUtils.WIfiGetStatus())
+	//		mUtils.WifiOptService(true);
 		
-		if (!mUtils.GPRSGetStatus()) {
-			mTextView.append("GPRS OFF");
-			mUtils.GPRSOptService(true);
-		}
+	//	if (!mUtils.GPRSGetStatus()) {
+	//		mTextView.append("GPRS OFF");
+	//		mUtils.GPRSOptService(true);
+	//	}
+		
+		Intent intent = new Intent(this, SettingActivity.class);
+		startActivityForResult(intent, 0);
 	}
 	
 	@Override

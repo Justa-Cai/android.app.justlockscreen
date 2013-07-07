@@ -14,12 +14,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-public class LockScreenService extends Service {
+public class LockScreenService extends Service implements OnSharedPreferenceChangeListener {
 	private final String TAG = "LockScreenService";
 	private utils mUtils = utils.GetInstance();
 
@@ -33,44 +35,68 @@ public class LockScreenService extends Service {
 
 	private boolean mbWifiStatus, mbGprsStatus; // WIFI GPRS 状态
 	private boolean mbWifiStatusChange=false, mbGprsStatusChange=false; // WIFI GPRS 状态 是否被软件操作过
+	
+	// 配置
+	private SharedPreferences mSharedPreferences;
+	private boolean mbSettingAutoClose=false, mbSettingAutoOpen=false;
+	private boolean mbSettingWifi = false, mbSettingGPRS=false;
+	private int miSettingAutoCloseTimeout = 10;
+	private int miSettingAutoOpenTimeout = 5;
+	private boolean mbSettingOnkeyInStatusbar = false;
 
 	private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {// 广播消息的处理
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction()
 					.equals("com.gss.justlockscreen.widget.click")) {
-				if (mUtils.GPRSGetStatus())
-					mUtils.GPRSOptService(false);
+				//if (mUtils.GPRSGetStatus())
+				//	mUtils.GPRSOptService(false);
 				mUtils.ScreenLockNow();
-				mbScreenLockByWidgets = true;
+				//mbScreenLockByWidgets = true;
 			}
 
 			else if (intent.getAction().equals(
 					"android.intent.action.SCREEN_OFF")) {
+				// 锁屏
 				mUtils.Logx("SCREEN OFF");
 				miTick = 0;
 				mbScreenWake = false;
 				
+				//mbWifiStatusChange = mUtils.WifiGetStatus();
+				//mbGprsStatusChange = mUtils.GPRSGetStatus();
 				//mbWifiStatusChange = mbGprsStatusChange = false;
+				
 				if (mbWifiStatusChange|| mbGprsStatusChange)
 				{
 					// 在5秒以内未恢复 不要关闭网络状态
+					// 或者 是网络都未开启
 					mbScreenLockByWidgets = false;
 					mUtils.Logx("Not need restore status");
+					
+					// 
 				}
 				else {
-				// 获取锁屏前的状态
-					mbWifiStatus = mUtils.WIfiGetStatus();
+					if (!mbSettingAutoClose)
+						return;
+					// 获取锁屏前的状态
+					mbWifiStatus = mUtils.WifiGetStatus();
 					mbGprsStatus = mUtils.GPRSGetStatus();
 					// 开始计数
-					mbScreenLockByWidgets = true;
+					if (mbWifiStatus || mbGprsStatus)
+						mbScreenLockByWidgets = true;
+					else
+						mbScreenLockByWidgets = false;
 				}
 	
 			} else if (intent.getAction().equals(
 					"android.intent.action.SCREEN_ON")) {
+				// 亮屏
 				mUtils.Logx("SCREEN ON");
 				mbScreenLockByWidgets = false;
 				miTick = 0;
+				
+				if (!mbSettingAutoOpen)
+					return;
 
 				// 获取锁屏后 是否对网络进行了操控
 				if (mbWifiStatusChange || mbGprsStatusChange) {
@@ -93,31 +119,34 @@ public class LockScreenService extends Service {
 			while (!isCancelled()) {
 				try {
 					if (mbScreenLockByWidgets) {
+						// 锁屏逻辑
 						miTick += 1;
 						mUtils.Logx("TICK:" + miTick);
-						mUtils.LogF(mUtils.GetTimeNow() + "TICK:" + miTick
-								+ "\n");
-						if (miTick == tick_dst) {
-							if (mUtils.GPRSGetStatus()) {
+						//mUtils.LogF(mUtils.GetTimeNow() + "TICK:" + miTick
+						//		+ "\n");
+						if (miTick == miSettingAutoCloseTimeout) {
+							if (mbSettingGPRS && mUtils.GPRSGetStatus()) {
 								mUtils.GPRSOptService(false);
 								mbGprsStatusChange = true;
 							}
 							// mUtils.WifiOptService(false);
 							// mbScreenLockByWidgets = false;
-						} else if (miTick > tick_dst) {
+						} else if (miTick > miSettingAutoCloseTimeout) {
 							if (!mUtils.GPRSGetStatus()) {
-								mUtils.WifiOptService(false);
+								if (mbSettingWifi)
+									mUtils.WifiOptService(false);
 								mbScreenLockByWidgets = false;
 								miTick = 0;
 								mbWifiStatusChange = true;
 							}
 						}
 					} else if (mbScreenWake) {
+						// 亮屏逻辑
 						mUtils.Logx("TICK:" + miTick);
-						if (miTick++ >= 5) {
-							if (mbWifiStatusChange)
+						if (miTick++ >= miSettingAutoOpenTimeout) {
+							if (mbSettingWifi && mbWifiStatusChange)
 								mUtils.WifiOptService(mbWifiStatus);
-							if (mbGprsStatusChange)
+							if (mbSettingGPRS && mbGprsStatusChange)
 								mUtils.WifiOptService(mbGprsStatus);
 							mbScreenWake = false;
 							mbWifiStatusChange = mbGprsStatusChange = false;
@@ -141,6 +170,7 @@ public class LockScreenService extends Service {
 		getBaseContext().registerReceiver(mIntentReceiver, intentFilter);
 		
 		mUtils.Init(getApplicationContext());
+		InitSetting();
 		
 		// 状态栏
 		CreateNotication();
@@ -153,8 +183,27 @@ public class LockScreenService extends Service {
 		mTimeoutTask.execute();
 	}
 	
+	private void InitSetting()
+	{
+		mSharedPreferences = mUtils.GetDefaultSharedPreferences();
+		mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
+		// 功能设置
+		mbSettingAutoClose = mSharedPreferences.getBoolean("auto_close", false);
+		mbSettingAutoOpen = mSharedPreferences.getBoolean("auto_open", false);
+		mbSettingWifi = mSharedPreferences.getBoolean("auto_close_wifi", false);
+		mbSettingGPRS = mSharedPreferences.getBoolean("auto_close_gprs", false);
+		// 参数设置
+		miSettingAutoCloseTimeout = Integer.parseInt(mSharedPreferences.getString("screen_after_close_timeout", "10"));
+		miSettingAutoOpenTimeout = Integer.parseInt(mSharedPreferences.getString("screen_after_open_timeout", "5"));
+		//  一键锁屏设置
+		mbSettingOnkeyInStatusbar = mSharedPreferences.getBoolean("onekey_statusbar", false);
+		
+	}
+	
 	private void CreateNotication()
 	{
+		if (!mbSettingOnkeyInStatusbar)
+			return;
 		NotificationManager notificationManager = mUtils.GetNotificationManager();
 		
 		//定义Notification的各种属性
@@ -176,6 +225,12 @@ public class LockScreenService extends Service {
         notification.setLatestEventInfo(context, contentTitle, contentText, pendingIntent);	
         notificationManager.notify(0,notification);
 	}
+	
+	private void RemoveNotication()
+	{
+		NotificationManager notificationManager = mUtils.GetNotificationManager();
+		notificationManager.cancel(0);
+	}
 
 	@Override
 	public void onDestroy() {
@@ -194,5 +249,30 @@ public class LockScreenService extends Service {
 	public IBinder onBind(Intent intent) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+			String key) {
+	//	mUtils.Logx("onSharedPreferenceChanged");
+		if (key.equals("onekey_statusbar"))
+		{
+			mbSettingOnkeyInStatusbar = mSharedPreferences.getBoolean("onekey_statusbar", false);
+			if (mbSettingOnkeyInStatusbar)
+				CreateNotication();
+			else
+				RemoveNotication();
+		}
+
+		// 功能设置
+		mbSettingAutoClose = mSharedPreferences.getBoolean("auto_close", false);
+		mbSettingAutoOpen = mSharedPreferences.getBoolean("auto_open", false);
+		mbSettingWifi = mSharedPreferences.getBoolean("auto_close_wifi", false);
+		mbSettingGPRS = mSharedPreferences.getBoolean("auto_close_gprs", false);
+		// 参数设置
+		miSettingAutoCloseTimeout = Integer.parseInt(mSharedPreferences.getString("screen_after_close_timeout", "10"));
+		miSettingAutoOpenTimeout = Integer.parseInt(mSharedPreferences.getString("screen_after_open_timeout", "5"));
+		//  一键锁屏设置
+		mbSettingOnkeyInStatusbar = mSharedPreferences.getBoolean("onekey_statusbar", false);
 	}
 }

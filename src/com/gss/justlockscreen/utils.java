@@ -16,10 +16,12 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiManager;
 import android.os.Environment;
 import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -39,6 +41,7 @@ public class utils {
 	
 	// handle
 	private Context mContext;
+	private SharedPreferences mSharedPreferences;
 	
 	// Utils Instance
 	static  public utils mUtils = new utils();
@@ -67,6 +70,7 @@ public class utils {
 		mConnectivityManager = (ConnectivityManager)mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 		mPowerManager = (PowerManager)mContext.getSystemService(Context.POWER_SERVICE);
 		mNotificationManager = (NotificationManager)mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+		mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
 		
 		// 
 		File f = Environment.getExternalStorageDirectory();
@@ -80,6 +84,10 @@ public class utils {
 		
 		mbInit = true;
 	}
+
+	///////////////////////////////////////////////////////////////////////////////////////////////
+	// 提示 操作
+	//////////////////////////////////////////////////////////////////////////////////////////////
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////
 	// 时间 操作
@@ -110,6 +118,7 @@ public class utils {
 		RandomAccessFile rf;
 		try {
 			File f = new File(LOG_FILE_PATH);
+			//Logx(LOG_FILE_PATH);
 			if (!f.exists()) 
 				f.createNewFile();
 			
@@ -126,6 +135,14 @@ public class utils {
 	}
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////
+	// 配置存储 操作
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	SharedPreferences GetDefaultSharedPreferences()
+	{
+		return mSharedPreferences;
+	}
+	
+	///////////////////////////////////////////////////////////////////////////////////////////////
 	// 通知 操作
 	//////////////////////////////////////////////////////////////////////////////////////////////
 	NotificationManager GetNotificationManager()
@@ -138,7 +155,7 @@ public class utils {
 	/*! 
 	 * \brief 获取WIFI是否开启
 	 */
-	boolean WIfiGetStatus()
+	boolean WifiGetStatus()
 	{
 		return mWifiManager.isWifiEnabled();
 	}
@@ -270,6 +287,18 @@ public class utils {
         activity.startActivityForResult(intent, 0);  
 	}
 	
+	/*! 
+	 * \brief 尝试 取消DevicePolicy的操作权限
+	 */
+	void TryRemoveDevicePolicyPermission(Activity activity)
+	{
+		if (!IsHaveDevicePolicyPermission())
+			return;
+		ComponentName componentName;  
+		componentName = new ComponentName(activity, DeviceAdminSampleReceiver.class);  
+		mDevicePolicyManager.removeActiveAdmin(componentName);
+	}
+	
 	 public static class DeviceAdminSampleReceiver extends DeviceAdminReceiver {
 	        void showToast(Context context, String msg) {
 	            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show();
@@ -286,7 +315,7 @@ public class utils {
 
 	        @Override
 	        public void onDisabled(Context context, Intent intent) {
-	        	showToast(context, "权限已经移除，请再次尝试卸载!");
+	        	showToast(context, "权限已经移除，请尝试卸载!");
 	        }
 	    }
 }
