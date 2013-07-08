@@ -50,7 +50,7 @@ public class widgetProvider extends AppWidgetProvider {
 		Intent intent= new Intent("com.gss.justlockscreen.widget.click");
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0,  
                 intent, 0);  
-        rv.setOnClickPendingIntent(R.id.imageView1, pendingIntent);
+        rv.setOnClickPendingIntent(R.id.imageViewTv, pendingIntent);
 
 		appWidgetManager.updateAppWidget(appWidgetIds, rv);
 	}

@@ -43,8 +43,8 @@
             android:title="通知栏" />
         <CheckBoxPreference
             android:defaultValue="false"
-            android:key="onekey_Effects"
-            android:summary="TODO..."
+            android:key="onekey_Effects_crt"
+            android:summary="CRT关闭效果"
             android:title="锁屏动画" />
     </PreferenceCategory>
     

@@ -19,6 +19,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.animation.Animation;
 import android.widget.Toast;
 
 public class LockScreenService extends Service implements OnSharedPreferenceChangeListener {
@@ -43,6 +44,7 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 	private int miSettingAutoCloseTimeout = 10;
 	private int miSettingAutoOpenTimeout = 5;
 	private boolean mbSettingOnkeyInStatusbar = false;
+	private boolean mbSettingEffectCRT = false;
 
 	private BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {// 广播消息的处理
 		@Override
@@ -51,8 +53,15 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 					.equals("com.gss.justlockscreen.widget.click")) {
 				//if (mUtils.GPRSGetStatus())
 				//	mUtils.GPRSOptService(false);
-				mUtils.ScreenLockNow();
-				//mbScreenLockByWidgets = true;
+				if (mbSettingEffectCRT)
+				{
+					Intent intentEffect = new Intent(getApplicationContext(), CloseScreenActivity.class);
+					intentEffect.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					startActivity(intentEffect);
+					//overridePendingTransition(Animation.INFINITE, Animation.INFINITE);
+				}
+				else
+					mUtils.ScreenLockNow();
 			}
 
 			else if (intent.getAction().equals(
@@ -62,25 +71,28 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 				miTick = 0;
 				mbScreenWake = false;
 				
-				//mbWifiStatusChange = mUtils.WifiGetStatus();
-				//mbGprsStatusChange = mUtils.GPRSGetStatus();
-				//mbWifiStatusChange = mbGprsStatusChange = false;
-				
-				if (mbWifiStatusChange|| mbGprsStatusChange)
+				if (mbSettingAutoOpen && (mbWifiStatusChange|| mbGprsStatusChange))
 				{
 					// 在5秒以内未恢复 不要关闭网络状态
 					// 或者 是网络都未开启
-					mbScreenLockByWidgets = false;
-					mUtils.Logx("Not need restore status");
 					
+					// 检查下网络是否在5秒内被开启
+					if (mUtils.WifiGetStatus() || mUtils.GPRSGetStatus()) {
+						mbWifiStatus = mUtils.WifiGetStatus() | mbWifiStatus;
+						mbGprsStatus = mUtils.GPRSGetStatus() | mbGprsStatus;
+						mbScreenLockByWidgets = true;
+					}
+					else
+						mbScreenLockByWidgets = false;
+					mUtils.Logx("Not need restore status");
 					// 
 				}
 				else {
 					if (!mbSettingAutoClose)
 						return;
 					// 获取锁屏前的状态
-					mbWifiStatus = mUtils.WifiGetStatus();
-					mbGprsStatus = mUtils.GPRSGetStatus();
+					mbWifiStatus = mUtils.WifiGetStatus() | mbWifiStatus;;
+					mbGprsStatus = mUtils.GPRSGetStatus() | mbGprsStatus;;
 					// 开始计数
 					if (mbWifiStatus || mbGprsStatus)
 						mbScreenLockByWidgets = true;
@@ -103,7 +115,10 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 					mbScreenWake = true;
 				}
 			}
-
+			else if (intent.getAction().equals("com.gss.justlockscreen.statusbar.click"))
+			{
+				mUtils.ScreenLockNow();
+			}
 			else {
 				mUtils.Logx(intent.getAction());
 			}
@@ -150,6 +165,7 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 								mUtils.WifiOptService(mbGprsStatus);
 							mbScreenWake = false;
 							mbWifiStatusChange = mbGprsStatusChange = false;
+							mbWifiStatus = mbGprsStatus =  false;
 						}
 					}
 					Thread.sleep(1000);
@@ -165,6 +181,7 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 		super.onCreate();
 		IntentFilter intentFilter = new IntentFilter();
 		intentFilter.addAction("com.gss.justlockscreen.widget.click");
+		intentFilter.addAction("com.gss.justlockscreen.statusbar.click");
 		intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		intentFilter.addAction(Intent.ACTION_SCREEN_ON);
 		getBaseContext().registerReceiver(mIntentReceiver, intentFilter);
@@ -187,6 +204,13 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 	{
 		mSharedPreferences = mUtils.GetDefaultSharedPreferences();
 		mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
+		
+		LoadSetting();
+
+	}
+	
+	private void LoadSetting()
+	{
 		// 功能设置
 		mbSettingAutoClose = mSharedPreferences.getBoolean("auto_close", false);
 		mbSettingAutoOpen = mSharedPreferences.getBoolean("auto_open", false);
@@ -197,7 +221,7 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 		miSettingAutoOpenTimeout = Integer.parseInt(mSharedPreferences.getString("screen_after_open_timeout", "5"));
 		//  一键锁屏设置
 		mbSettingOnkeyInStatusbar = mSharedPreferences.getBoolean("onekey_statusbar", false);
-		
+		mbSettingEffectCRT = mSharedPreferences.getBoolean("onekey_Effects_crt", false);
 	}
 	
 	private void CreateNotication()
@@ -214,7 +238,7 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 		notification.flags |= Notification.FLAG_ONGOING_EVENT;
 		notification.flags |= Notification.FLAG_NO_CLEAR;
 		
-		Intent intent= new Intent("com.gss.justlockscreen.widget.click");
+		Intent intent= new Intent("com.gss.justlockscreen.statusbar.click");
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), 0,  
                 intent, 0);  
         
@@ -263,16 +287,12 @@ public class LockScreenService extends Service implements OnSharedPreferenceChan
 			else
 				RemoveNotication();
 		}
-
-		// 功能设置
-		mbSettingAutoClose = mSharedPreferences.getBoolean("auto_close", false);
-		mbSettingAutoOpen = mSharedPreferences.getBoolean("auto_open", false);
-		mbSettingWifi = mSharedPreferences.getBoolean("auto_close_wifi", false);
-		mbSettingGPRS = mSharedPreferences.getBoolean("auto_close_gprs", false);
-		// 参数设置
-		miSettingAutoCloseTimeout = Integer.parseInt(mSharedPreferences.getString("screen_after_close_timeout", "10"));
-		miSettingAutoOpenTimeout = Integer.parseInt(mSharedPreferences.getString("screen_after_open_timeout", "5"));
-		//  一键锁屏设置
-		mbSettingOnkeyInStatusbar = mSharedPreferences.getBoolean("onekey_statusbar", false);
+		else if (key.equals("auto_open"))
+		{
+			mbWifiStatus = mbGprsStatus = false;
+			mbWifiStatusChange = mbGprsStatusChange = false;
+		}
+		
+		LoadSetting();
 	}
 }

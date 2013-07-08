@@ -19,7 +19,6 @@
         android:icon="@drawable/lock"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        
         <receiver android:name="com.gss.justlockscreen.widgetProvider" >
             <meta-data
                 android:name="android.appwidget.provider"
@@ -37,8 +36,6 @@
             android:name="com.gss.justlockscreen.MainActivity"
             android:label="@string/title_activity_main" >
             <intent-filter>
-	            
-
             </intent-filter>
         </activity>
 
@@ -58,10 +55,16 @@
         <service android:name="LockScreenService" />
 
         <activity android:name="com.gss.justlockscreen.SettingActivity" >
-		<intent-filter >
-		        <action android:name="android.intent.action.MAIN" />
+            <intent-filter>
+                  <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-		</intent-filter>
+            </intent-filter>
+        </activity>
+        <activity android:name="CloseScreenActivity" android:theme="@*android:style/Theme.Black.NoTitleBar.Fullscreen" 
+            android:excludeFromRecents="true">
+                  <intent-filter>
+ 
+            </intent-filter>
         </activity>
     </application>
 

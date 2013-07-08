@@ -1,5 +1,7 @@
 package com.gss.justlockscreen;
 
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -14,6 +16,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ListView;
 
@@ -59,6 +63,12 @@ public class SettingActivity extends PreferenceActivity implements
 		// ¿Ø¼þ¸üÐÂ
 		mEditTextPreference = (EditTextPreference)findPreference("about");
 		//mEditTextPreference.setOnPreferenceClickListener(this);
+		
+//		Animation animation =  AnimationUtils.loadAnimation(this, R.anim.alpha);
+//		Animation animation =  AnimationUtils.loadAnimation(this, R.anim.scale);
+//		Animation animation =  AnimationUtils.loadAnimation(this, R.anim.translate);
+//		Animation  animation = AnimationUtils.loadAnimation(this, R.anim.rotate);
+//		mBtnActiveDevice.startAnimation(animation);
 		
 	}
 
